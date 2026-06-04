@@ -354,3 +354,27 @@ export async function compareBranches(projectPath: string, from: string, to: str
     `/projects/${projectPath}/repository/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
   );
 }
+
+// ─── Code Search ──────────────────────────────────────────────────────────────
+
+export interface SearchBlob {
+  basename: string;
+  data: string;
+  path: string;
+  filename: string;
+  id: string | null;
+  ref: string;
+  startline: number;
+  project_id: number;
+}
+
+export async function searchProjectCode(
+  projectPath: string,
+  query: string,
+  options?: { ref?: string; filePath?: string }
+): Promise<SearchBlob[]> {
+  let endpoint = `/projects/${projectPath}/search?scope=blobs&search=${encodeURIComponent(query)}`;
+  if (options?.ref) endpoint += `&ref=${encodeURIComponent(options.ref)}`;
+  if (options?.filePath) endpoint += `&filename=${encodeURIComponent(options.filePath)}`;
+  return gitlabFetchPaginated<SearchBlob>(endpoint);
+}

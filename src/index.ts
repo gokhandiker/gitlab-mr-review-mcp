@@ -23,6 +23,7 @@ import {
   getJobLog,
   listOpenMRs,
   compareBranches,
+  searchProjectCode,
 } from "./gitlab-client.js";
 
 const server = new McpServer({
@@ -481,6 +482,47 @@ server.tool(
 
     return {
       content: [{ type: "text", text: `# Branch Compare: \`${from_branch}\` → \`${to_branch}\`\n\n## Commits (${result.commits.length})\n${commits}\n\n## Changed Files (${result.diffs.length})\n${diffs}` }],
+    };
+  }
+);
+
+// ─── Tool 18: Search Codebase ────────────────────────────────────────────────
+
+server.tool(
+  "search_codebase",
+  "Search for code patterns in a GitLab project (grep-style text search). Use to find existing patterns like LaunchedEffect usage, ViewModel communication, dependency injection, etc.",
+  {
+    project_url: z.string().url().describe("GitLab project URL, e.g. https://gitlab.com/group/project"),
+    query: z.string().describe("Search query — code pattern, class name, function call, import, etc."),
+    ref: z.string().optional().describe("Branch or tag to search in (default: project default branch)"),
+    file_filter: z.string().optional().describe("Filter by filename pattern, e.g. '*.kt' or 'ViewModel'"),
+  },
+  async ({ project_url, query, ref, file_filter }) => {
+    const projectPath = parseProjectUrl(project_url);
+    const results = await searchProjectCode(projectPath, query, { ref, filePath: file_filter });
+
+    if (results.length === 0) {
+      return { content: [{ type: "text", text: `No results found for \`${query}\`` }] };
+    }
+
+    const grouped = new Map<string, typeof results>();
+    for (const r of results) {
+      const existing = grouped.get(r.path) || [];
+      existing.push(r);
+      grouped.set(r.path, existing);
+    }
+
+    const output: string[] = [];
+    for (const [path, hits] of grouped) {
+      const snippets = hits.map((h) => {
+        const lines = h.data.replace(/\r\n/g, "\n").trimEnd();
+        return `  Line ${h.startline}:\n\`\`\`\n${lines}\n\`\`\``;
+      }).join("\n\n");
+      output.push(`### ${path}\n${snippets}`);
+    }
+
+    return {
+      content: [{ type: "text", text: `# Search: \`${query}\` (${results.length} matches in ${grouped.size} files)\n\n${output.join("\n\n---\n\n")}` }],
     };
   }
 );
