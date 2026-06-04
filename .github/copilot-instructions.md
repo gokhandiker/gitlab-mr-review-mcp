@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a local MCP server that provides 17 tools for interacting with GitLab Merge Requests. It authenticates via a Personal Access Token (PAT) with `api` scope, passed through the `GITLAB_TOKEN` environment variable.
+This is a local MCP server that provides 18 tools for interacting with GitLab Merge Requests. It authenticates via a Personal Access Token (PAT) with `api` scope, passed through the `GITLAB_TOKEN` environment variable.
 
 ## Available Tools
 
@@ -19,6 +19,7 @@ This is a local MCP server that provides 17 tools for interacting with GitLab Me
 | `get_pipeline_job_log` | Log output from a specific CI job (last 200 lines) |
 | `list_open_mrs` | List open MRs in a project (filterable) |
 | `compare_branches` | Diff between any two branches |
+| `search_codebase` | Search for code patterns in the project (grep-style) |
 
 ### Writing & Actions
 

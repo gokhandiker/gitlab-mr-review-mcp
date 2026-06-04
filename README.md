@@ -1,6 +1,6 @@
 # gitlab-mr-review-mcp
 
-An MCP (Model Context Protocol) server that provides 17 tools for interacting with GitLab Merge Requests. Use it with VS Code Copilot, Claude Desktop, or any MCP-compatible client to review code, post comments, approve MRs, and inspect CI pipelines — all through natural language.
+An MCP (Model Context Protocol) server that provides 18 tools for interacting with GitLab Merge Requests. Use it with VS Code Copilot, Claude Desktop, or any MCP-compatible client to review code, post comments, approve MRs, and inspect CI pipelines — all through natural language.
 
 ## Features
 
@@ -93,7 +93,7 @@ Or if you cloned locally:
 }
 ```
 
-## Available Tools (17)
+## Available Tools (18)
 
 ### Reading & Inspection
 
@@ -108,6 +108,7 @@ Or if you cloned locally:
 | `get_pipeline_job_log` | Log output from a specific CI job (last 200 lines) |
 | `list_open_mrs` | List open MRs in a project (filterable by author/labels) |
 | `compare_branches` | Diff between any two branches |
+| `search_codebase` | Search for code patterns in the project (grep-style) |
 
 ### Writing & Actions
 
