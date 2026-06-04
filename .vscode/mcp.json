@@ -1,0 +1,27 @@
+{
+  "servers": {
+    "gitlab-mr-review": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/build/index.js"],
+      "env": {
+        "GITLAB_TOKEN": "${input:gitlabToken}",
+        "GITLAB_URL": "${input:gitlabUrl}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "gitlabToken",
+      "type": "promptString",
+      "description": "GitLab Personal Access Token (api scope required)",
+      "password": true
+    },
+    {
+      "id": "gitlabUrl",
+      "type": "promptString",
+      "description": "GitLab instance URL (e.g. https://gitlab.com)",
+      "default": "https://gitlab.com"
+    }
+  ]
+}

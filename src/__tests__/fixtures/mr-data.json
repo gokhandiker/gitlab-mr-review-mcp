@@ -1,0 +1,184 @@
+{
+  "mergeRequest": {
+    "id": 1001,
+    "iid": 42,
+    "title": "Add user authentication module",
+    "description": "This MR adds JWT-based authentication.\n\n## Changes\n- New auth middleware\n- Login/logout endpoints",
+    "state": "opened",
+    "author": { "name": "Jane Dev", "username": "janedev" },
+    "source_branch": "feature/auth",
+    "target_branch": "main",
+    "web_url": "https://gitlab.com/mygroup/myproject/-/merge_requests/42",
+    "created_at": "2024-01-15T10:00:00Z",
+    "updated_at": "2024-01-16T14:30:00Z",
+    "labels": ["backend", "security"],
+    "draft": false,
+    "merge_status": "can_be_merged",
+    "has_conflicts": false
+  },
+  "diffs": [
+    {
+      "old_path": "src/auth.ts",
+      "new_path": "src/auth.ts",
+      "a_mode": "0",
+      "b_mode": "100644",
+      "new_file": true,
+      "renamed_file": false,
+      "deleted_file": false,
+      "diff": "@@ -0,0 +1,20 @@\n+import jwt from 'jsonwebtoken';\n+\n+export function authenticate(req, res, next) {\n+  const token = req.headers.authorization;\n+  if (!token) return res.status(401).json({ error: 'No token' });\n+  try {\n+    req.user = jwt.verify(token, process.env.SECRET);\n+    next();\n+  } catch {\n+    res.status(403).json({ error: 'Invalid token' });\n+  }\n+}"
+    },
+    {
+      "old_path": "src/routes.ts",
+      "new_path": "src/routes.ts",
+      "a_mode": "100644",
+      "b_mode": "100644",
+      "new_file": false,
+      "renamed_file": false,
+      "deleted_file": false,
+      "diff": "@@ -5,6 +5,8 @@\n import { Router } from 'express';\n+import { authenticate } from './auth';\n \n const router = Router();\n+router.use(authenticate);\n \n export default router;"
+    }
+  ],
+  "discussions": [
+    {
+      "id": "disc-abc123",
+      "notes": [
+        {
+          "id": 5001,
+          "body": "Should we use a constant for the secret key instead of reading from env directly?",
+          "author": { "name": "Bob Reviewer", "username": "bobreview" },
+          "created_at": "2024-01-16T09:00:00Z",
+          "position": {
+            "new_path": "src/auth.ts",
+            "old_path": "src/auth.ts",
+            "new_line": 7,
+            "old_line": null,
+            "position_type": "text"
+          },
+          "resolvable": true,
+          "resolved": false
+        }
+      ]
+    },
+    {
+      "id": "disc-def456",
+      "notes": [
+        {
+          "id": 5002,
+          "body": "Looks good overall!",
+          "author": { "name": "Alice Lead", "username": "alicelead" },
+          "created_at": "2024-01-16T10:00:00Z",
+          "resolvable": false
+        }
+      ]
+    }
+  ],
+  "versions": [
+    {
+      "id": 999,
+      "head_commit_sha": "abc123def456",
+      "base_commit_sha": "000111222333",
+      "start_commit_sha": "444555666777",
+      "created_at": "2024-01-15T10:01:00Z"
+    }
+  ],
+  "commits": [
+    {
+      "id": "abc123def456789",
+      "short_id": "abc123d",
+      "title": "Add JWT authentication middleware",
+      "message": "Add JWT authentication middleware\n\nImplements token verification for all protected routes.",
+      "author_name": "Jane Dev",
+      "author_email": "jane@example.com",
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "def789abc012345",
+      "short_id": "def789a",
+      "title": "Wire auth middleware into router",
+      "message": "Wire auth middleware into router",
+      "author_name": "Jane Dev",
+      "author_email": "jane@example.com",
+      "created_at": "2024-01-15T11:00:00Z"
+    }
+  ],
+  "pipelines": [
+    {
+      "id": 7001,
+      "iid": 1,
+      "status": "success",
+      "ref": "feature/auth",
+      "sha": "abc123def456",
+      "web_url": "https://gitlab.com/mygroup/myproject/-/pipelines/7001",
+      "created_at": "2024-01-15T10:05:00Z",
+      "updated_at": "2024-01-15T10:15:00Z"
+    }
+  ],
+  "fileContent": {
+    "file_name": "auth.ts",
+    "file_path": "src/auth.ts",
+    "size": 350,
+    "encoding": "base64",
+    "content": "aW1wb3J0IGp3dCBmcm9tICdqc29ud2VidG9rZW4nOwoKZXhwb3J0IGZ1bmN0aW9uIGF1dGhlbnRpY2F0ZShyZXEsIHJlcywgbmV4dCkgewogIGNvbnN0IHRva2VuID0gcmVxLmhlYWRlcnMuYXV0aG9yaXphdGlvbjsKICBpZiAoIXRva2VuKSByZXR1cm4gcmVzLnN0YXR1cyg0MDEpLmpzb24oeyBlcnJvcjogJ05vIHRva2VuJyB9KTsKICB0cnkgewogICAgcmVxLnVzZXIgPSBqd3QudmVyaWZ5KHRva2VuLCBwcm9jZXNzLmVudi5TRUNSRVQpOwogICAgbmV4dCgpOwogIH0gY2F0Y2ggewogICAgcmVzLnN0YXR1cyg0MDMpLmpzb24oeyBlcnJvcjogJ0ludmFsaWQgdG9rZW4nIH0pOwogIH0KfQo=",
+    "ref": "feature/auth"
+  },
+  "openMRs": [
+    {
+      "id": 1001,
+      "iid": 42,
+      "title": "Add user authentication module",
+      "state": "opened",
+      "author": { "name": "Jane Dev", "username": "janedev" },
+      "source_branch": "feature/auth",
+      "target_branch": "main",
+      "web_url": "https://gitlab.com/mygroup/myproject/-/merge_requests/42",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-16T14:30:00Z",
+      "labels": ["backend", "security"],
+      "draft": false,
+      "merge_status": "can_be_merged",
+      "has_conflicts": false
+    },
+    {
+      "id": 1002,
+      "iid": 43,
+      "title": "Update README",
+      "state": "opened",
+      "author": { "name": "Bob Reviewer", "username": "bobreview" },
+      "source_branch": "docs/readme",
+      "target_branch": "main",
+      "web_url": "https://gitlab.com/mygroup/myproject/-/merge_requests/43",
+      "created_at": "2024-01-14T08:00:00Z",
+      "updated_at": "2024-01-14T09:00:00Z",
+      "labels": ["documentation"],
+      "draft": true,
+      "merge_status": "can_be_merged",
+      "has_conflicts": false
+    }
+  ],
+  "branchCompare": {
+    "commit": { "id": "abc123def456789", "title": "Add JWT authentication middleware" },
+    "commits": [
+      {
+        "id": "abc123def456789",
+        "short_id": "abc123d",
+        "title": "Add JWT authentication middleware",
+        "message": "Add JWT authentication middleware",
+        "author_name": "Jane Dev",
+        "author_email": "jane@example.com",
+        "created_at": "2024-01-15T10:00:00Z"
+      }
+    ],
+    "diffs": [
+      {
+        "old_path": "src/auth.ts",
+        "new_path": "src/auth.ts",
+        "a_mode": "0",
+        "b_mode": "100644",
+        "new_file": true,
+        "renamed_file": false,
+        "deleted_file": false,
+        "diff": "@@ -0,0 +1,10 @@\n+import jwt from 'jsonwebtoken';\n+"
+      }
+    ]
+  }
+}
