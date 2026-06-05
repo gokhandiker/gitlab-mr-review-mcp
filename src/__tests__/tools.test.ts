@@ -222,6 +222,34 @@ describe("addMRLabels", () => {
   });
 });
 
+describe("updateMR", () => {
+  it("sends PUT with MR update payload", async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse(fixtures.mergeRequest));
+
+    await client.updateMR(PROJECT, MR_IID, {
+      title: "Updated title",
+      description: "Updated description",
+      target_branch: "release/1.0",
+      add_labels: "ready,reviewed",
+      squash: true,
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/merge_requests/${MR_IID}`),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          title: "Updated title",
+          description: "Updated description",
+          target_branch: "release/1.0",
+          add_labels: "ready,reviewed",
+          squash: true,
+        }),
+      })
+    );
+  });
+});
+
 describe("getFileContent", () => {
   it("fetches file with correct ref param", async () => {
     mockFetch.mockReturnValueOnce(jsonResponse(fixtures.fileContent));
@@ -234,6 +262,31 @@ describe("getFileContent", () => {
     );
     expect(file.file_path).toBe("src/auth.ts");
     expect(file.encoding).toBe("base64");
+  });
+});
+
+describe("getFileBlame", () => {
+  it("fetches blame endpoint with range params", async () => {
+    const blame = [
+      {
+        commit: {
+          id: "abc123",
+          short_id: "abc123",
+          title: "Add auth",
+          author_name: "Jane Dev",
+          authored_date: "2026-01-01T00:00:00Z",
+        },
+        lines: ["const x = 1;"],
+      },
+    ];
+    mockFetch.mockReturnValueOnce(jsonResponse(blame));
+
+    const result = await client.getFileBlame(PROJECT, "src/auth.ts", "feature/auth", { start: 10, end: 20 });
+    expect(result).toHaveLength(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/repository/files/src%2Fauth.ts/blame?ref=feature%2Fauth&range[start]=10&range[end]=20"),
+      expect.anything()
+    );
   });
 });
 

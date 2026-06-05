@@ -1,7 +1,7 @@
 {
   "name": "gitlab-mr-review-mcp",
-  "version": "2.0.0",
-  "description": "MCP server for GitLab Merge Request reviews — 18 tools for reading diffs, posting comments, suggestions, approvals, CI inspection, code search, and more",
+  "version": "2.1.0",
+  "description": "MCP server for GitLab Merge Request reviews — 20 tools for reading diffs, posting comments, suggestions, approvals, CI inspection, blame, and metadata updates",
   "type": "module",
   "license": "MIT",
   "author": "Gokhan Diker",

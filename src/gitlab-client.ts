@@ -125,6 +125,30 @@ export interface BranchCompare {
   diffs: DiffFile[];
 }
 
+export interface UpdateMRPayload {
+  title?: string;
+  description?: string;
+  target_branch?: string;
+  assignee_ids?: number[];
+  reviewer_ids?: number[];
+  labels?: string;
+  add_labels?: string;
+  remove_labels?: string;
+  milestone_id?: number;
+  squash?: boolean;
+}
+
+export interface BlameRange {
+  commit: {
+    id: string;
+    short_id: string;
+    title: string;
+    author_name: string;
+    authored_date: string;
+  };
+  lines: string[];
+}
+
 // ─── URL Parsing ──────────────────────────────────────────────────────────────
 
 export function parseMrUrl(mrUrl: string): { projectPath: string; mrIid: number } {
@@ -317,11 +341,31 @@ export async function addMRLabels(projectPath: string, mrIid: number, labels: st
   });
 }
 
+export async function updateMR(projectPath: string, mrIid: number, payload: UpdateMRPayload): Promise<MergeRequestInfo> {
+  return gitlabFetch<MergeRequestInfo>(`/projects/${projectPath}/merge_requests/${mrIid}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 // ─── File Content ─────────────────────────────────────────────────────────────
 
 export async function getFileContent(projectPath: string, filePath: string, ref: string): Promise<FileContent> {
   const encodedFilePath = encodeURIComponent(filePath);
   return gitlabFetch<FileContent>(`/projects/${projectPath}/repository/files/${encodedFilePath}?ref=${encodeURIComponent(ref)}`);
+}
+
+export async function getFileBlame(
+  projectPath: string,
+  filePath: string,
+  ref: string,
+  range?: { start?: number; end?: number }
+): Promise<BlameRange[]> {
+  const encodedFilePath = encodeURIComponent(filePath);
+  let endpoint = `/projects/${projectPath}/repository/files/${encodedFilePath}/blame?ref=${encodeURIComponent(ref)}`;
+  if (range?.start) endpoint += `&range[start]=${range.start}`;
+  if (range?.end) endpoint += `&range[end]=${range.end}`;
+  return gitlabFetch<BlameRange[]>(endpoint);
 }
 
 // ─── Pipeline & Jobs ──────────────────────────────────────────────────────────

@@ -17,7 +17,9 @@ import {
   approveMR,
   unapproveMR,
   addMRLabels,
+  updateMR,
   getFileContent,
+  getFileBlame,
   getMRPipelines,
   getPipelineJobs,
   getJobLog,
@@ -28,7 +30,7 @@ import {
 
 const server = new McpServer({
   name: "gitlab-mr-review",
-  version: "2.0.0",
+  version: "2.1.0",
 });
 
 /** Normalize escaped newlines/tabs from agent output to real characters */
@@ -200,6 +202,56 @@ server.tool(
 // ─── Tool 6: Resolve Discussion ──────────────────────────────────────────────
 
 server.tool(
+  "update_mr",
+  "Update Merge Request metadata such as title, description, target branch, assignees, reviewers, labels, milestone, and squash preference.",
+  {
+    mr_url: z.string().url().describe("Full GitLab MR URL"),
+    title: z.string().optional().describe("New MR title"),
+    description: z.string().optional().describe("New MR description"),
+    target_branch: z.string().optional().describe("New target branch"),
+    assignee_ids: z.array(z.number()).optional().describe("User IDs to set as assignees"),
+    reviewer_ids: z.array(z.number()).optional().describe("User IDs to set as reviewers"),
+    labels: z.array(z.string()).optional().describe("Replace labels with this exact set"),
+    add_labels: z.array(z.string()).optional().describe("Add labels without replacing existing labels"),
+    remove_labels: z.array(z.string()).optional().describe("Remove labels from MR"),
+    milestone_id: z.number().optional().describe("Milestone ID"),
+    squash: z.boolean().optional().describe("Set squash option for merge"),
+  },
+  async ({ mr_url, title, description, target_branch, assignee_ids, reviewer_ids, labels, add_labels, remove_labels, milestone_id, squash }) => {
+    const hasUpdate = [title, description, target_branch, assignee_ids, reviewer_ids, labels, add_labels, remove_labels, milestone_id, squash]
+      .some((v) => v !== undefined);
+
+    if (!hasUpdate) {
+      return { content: [{ type: "text", text: "Error: Provide at least one field to update." }], isError: true };
+    }
+
+    const { projectPath, mrIid } = parseMrUrl(mr_url);
+    const payload: any = {
+      title,
+      description,
+      target_branch,
+      assignee_ids,
+      reviewer_ids,
+      milestone_id,
+      squash,
+    };
+    if (labels) payload.labels = labels.join(",");
+    if (add_labels) payload.add_labels = add_labels.join(",");
+    if (remove_labels) payload.remove_labels = remove_labels.join(",");
+
+    const updated = await updateMR(projectPath, mrIid, payload);
+    return {
+      content: [{
+        type: "text",
+        text: `✅ MR updated: **${updated.title}**\n\n- Target: \`${updated.target_branch}\`\n- Labels: ${updated.labels.length > 0 ? updated.labels.join(", ") : "none"}`,
+      }],
+    };
+  }
+);
+
+// ─── Tool 7: Resolve Discussion ──────────────────────────────────────────────
+
+server.tool(
   "resolve_discussion",
   "Resolve or unresolve a discussion thread on a GitLab Merge Request",
   {
@@ -214,7 +266,7 @@ server.tool(
   }
 );
 
-// ─── Tool 7: Reply to Discussion ─────────────────────────────────────────────
+// ─── Tool 8: Reply to Discussion ─────────────────────────────────────────────
 
 server.tool(
   "reply_to_discussion",
@@ -232,7 +284,7 @@ server.tool(
   }
 );
 
-// ─── Tool 8: Create MR Suggestion ────────────────────────────────────────────
+// ─── Tool 9: Create MR Suggestion ────────────────────────────────────────────
 
 server.tool(
   "create_mr_suggestion",
@@ -270,7 +322,7 @@ server.tool(
   }
 );
 
-// ─── Tool 9: Approve MR ──────────────────────────────────────────────────────
+// ─── Tool 10: Approve MR ─────────────────────────────────────────────────────
 
 server.tool(
   "approve_mr",
@@ -285,7 +337,7 @@ server.tool(
   }
 );
 
-// ─── Tool 10: Unapprove MR ───────────────────────────────────────────────────
+// ─── Tool 11: Unapprove MR ───────────────────────────────────────────────────
 
 server.tool(
   "unapprove_mr",
@@ -300,7 +352,7 @@ server.tool(
   }
 );
 
-// ─── Tool 11: List MR Pipelines ──────────────────────────────────────────────
+// ─── Tool 12: List MR Pipelines ──────────────────────────────────────────────
 
 server.tool(
   "list_mr_pipelines",
@@ -326,7 +378,7 @@ server.tool(
   }
 );
 
-// ─── Tool 12: Get Pipeline Job Log ───────────────────────────────────────────
+// ─── Tool 13: Get Pipeline Job Log ───────────────────────────────────────────
 
 server.tool(
   "get_pipeline_job_log",
@@ -347,7 +399,7 @@ server.tool(
   }
 );
 
-// ─── Tool 13: List Open MRs ──────────────────────────────────────────────────
+// ─── Tool 14: List Open MRs ──────────────────────────────────────────────────
 
 server.tool(
   "list_open_mrs",
@@ -375,7 +427,7 @@ server.tool(
   }
 );
 
-// ─── Tool 14: Add MR Label ───────────────────────────────────────────────────
+// ─── Tool 15: Add MR Label ───────────────────────────────────────────────────
 
 server.tool(
   "add_mr_label",
@@ -391,7 +443,7 @@ server.tool(
   }
 );
 
-// ─── Tool 15: Get MR Commits ─────────────────────────────────────────────────
+// ─── Tool 16: Get MR Commits ─────────────────────────────────────────────────
 
 server.tool(
   "get_mr_commits",
@@ -408,7 +460,7 @@ server.tool(
   }
 );
 
-// ─── Tool 16: Batch Create Comments ──────────────────────────────────────────
+// ─── Tool 17: Batch Create Comments ──────────────────────────────────────────
 
 server.tool(
   "batch_create_comments",
@@ -460,7 +512,7 @@ server.tool(
   }
 );
 
-// ─── Tool 17: Compare Branches ───────────────────────────────────────────────
+// ─── Tool 18: Compare Branches ───────────────────────────────────────────────
 
 server.tool(
   "compare_branches",
@@ -486,7 +538,7 @@ server.tool(
   }
 );
 
-// ─── Tool 18: Search Codebase ────────────────────────────────────────────────
+// ─── Tool 19: Search Codebase ────────────────────────────────────────────────
 
 server.tool(
   "search_codebase",
@@ -527,12 +579,55 @@ server.tool(
   }
 );
 
+// ─── Tool 20: Get File Blame ─────────────────────────────────────────────────
+
+server.tool(
+  "get_file_blame",
+  "Get Git blame information for a file from the MR source branch (or a custom ref), optionally for a line range.",
+  {
+    mr_url: z.string().url().describe("Full GitLab MR URL"),
+    file_path: z.string().describe("Path of the file to inspect"),
+    line_start: z.number().optional().describe("Optional start line for blame range"),
+    line_end: z.number().optional().describe("Optional end line for blame range"),
+    ref: z.string().optional().describe("Optional branch/tag ref override"),
+  },
+  async ({ mr_url, file_path, line_start, line_end, ref }) => {
+    if (line_start !== undefined && line_end !== undefined && line_start > line_end) {
+      return { content: [{ type: "text", text: "Error: line_start must be less than or equal to line_end." }], isError: true };
+    }
+
+    const { projectPath, mrIid } = parseMrUrl(mr_url);
+    const mr = await getMergeRequest(projectPath, mrIid);
+    const blameRef = ref || mr.source_branch;
+    const ranges = await getFileBlame(projectPath, file_path, blameRef, { start: line_start, end: line_end });
+
+    if (ranges.length === 0) {
+      return { content: [{ type: "text", text: "No blame entries found for this file/range." }] };
+    }
+
+    let currentLine = line_start || 1;
+    const output = ranges.map((r) => {
+      const from = currentLine;
+      const to = currentLine + r.lines.length - 1;
+      currentLine = to + 1;
+      return `- **${r.commit.short_id}** ${r.commit.title}\n  - Author: ${r.commit.author_name}\n  - Date: ${r.commit.authored_date}\n  - Lines: ${from}-${to}`;
+    }).join("\n\n");
+
+    return {
+      content: [{
+        type: "text",
+        text: `# Blame for \`${file_path}\` (ref: \`${blameRef}\`)\n\n${output}`,
+      }],
+    };
+  }
+);
+
 // ─── Start Server ─────────────────────────────────────────────────────────────
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("GitLab MR Review MCP Server v2.0.0 running on stdio");
+  console.error("GitLab MR Review MCP Server v2.1.0 running on stdio");
 }
 
 main().catch((error) => {
