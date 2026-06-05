@@ -125,6 +125,20 @@ export interface BranchCompare {
   diffs: DiffFile[];
 }
 
+export interface CreateMRPayload {
+  source_branch: string;
+  target_branch: string;
+  title: string;
+  description?: string;
+  assignee_ids?: number[];
+  reviewer_ids?: number[];
+  labels?: string;
+  milestone_id?: number;
+  squash?: boolean;
+  remove_source_branch?: boolean;
+  draft?: boolean;
+}
+
 export interface UpdateMRPayload {
   title?: string;
   description?: string;
@@ -344,6 +358,13 @@ export async function addMRLabels(projectPath: string, mrIid: number, labels: st
 export async function updateMR(projectPath: string, mrIid: number, payload: UpdateMRPayload): Promise<MergeRequestInfo> {
   return gitlabFetch<MergeRequestInfo>(`/projects/${projectPath}/merge_requests/${mrIid}`, {
     method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createMR(projectPath: string, payload: CreateMRPayload): Promise<MergeRequestInfo> {
+  return gitlabFetch<MergeRequestInfo>(`/projects/${projectPath}/merge_requests`, {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }

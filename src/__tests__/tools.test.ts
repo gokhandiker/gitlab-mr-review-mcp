@@ -250,6 +250,34 @@ describe("updateMR", () => {
   });
 });
 
+describe("createMR", () => {
+  it("sends POST with MR creation payload", async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse(fixtures.mergeRequest));
+
+    await client.createMR(PROJECT, {
+      source_branch: "feature/auth",
+      target_branch: "main",
+      title: "Add user authentication module",
+      description: "Implements OAuth2 login",
+      draft: true,
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/projects/${PROJECT}/merge_requests`),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          source_branch: "feature/auth",
+          target_branch: "main",
+          title: "Add user authentication module",
+          description: "Implements OAuth2 login",
+          draft: true,
+        }),
+      })
+    );
+  });
+});
+
 describe("getFileContent", () => {
   it("fetches file with correct ref param", async () => {
     mockFetch.mockReturnValueOnce(jsonResponse(fixtures.fileContent));

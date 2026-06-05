@@ -18,6 +18,7 @@ import {
   unapproveMR,
   addMRLabels,
   updateMR,
+  createMR,
   getFileContent,
   getFileBlame,
   getMRPipelines,
@@ -617,6 +618,51 @@ server.tool(
       content: [{
         type: "text",
         text: `# Blame for \`${file_path}\` (ref: \`${blameRef}\`)\n\n${output}`,
+      }],
+    };
+  }
+);
+
+// ─── Tool 21: Create MR ──────────────────────────────────────────────────────
+
+server.tool(
+  "create_mr",
+  "Create a new Merge Request in a GitLab project.",
+  {
+    project_url: z.string().url().describe("GitLab project URL, e.g. https://gitlab.com/group/project"),
+    source_branch: z.string().describe("Source branch (the branch with changes)"),
+    target_branch: z.string().describe("Target branch (e.g. main, develop)"),
+    title: z.string().describe("MR title"),
+    description: z.string().optional().describe("MR description (Markdown)"),
+    assignee_ids: z.array(z.number()).optional().describe("User IDs to assign"),
+    reviewer_ids: z.array(z.number()).optional().describe("User IDs to set as reviewers"),
+    labels: z.array(z.string()).optional().describe("Labels to add"),
+    milestone_id: z.number().optional().describe("Milestone ID"),
+    squash: z.boolean().optional().describe("Enable squash on merge"),
+    remove_source_branch: z.boolean().optional().describe("Delete source branch after merge"),
+    draft: z.boolean().optional().describe("Create as draft MR"),
+  },
+  async ({ project_url, source_branch, target_branch, title, description, assignee_ids, reviewer_ids, labels, milestone_id, squash, remove_source_branch, draft }) => {
+    const projectPath = parseProjectUrl(project_url);
+    const payload: any = {
+      source_branch,
+      target_branch,
+      title,
+      description,
+      assignee_ids,
+      reviewer_ids,
+      milestone_id,
+      squash,
+      remove_source_branch,
+      draft,
+    };
+    if (labels) payload.labels = labels.join(",");
+
+    const mr = await createMR(projectPath, payload);
+    return {
+      content: [{
+        type: "text",
+        text: `✅ MR created: **${mr.title}** (!${mr.iid})\n\n- URL: ${mr.web_url}\n- Source: \`${mr.source_branch}\` → Target: \`${mr.target_branch}\`\n- State: ${mr.state}${mr.draft ? " (draft)" : ""}`,
       }],
     };
   }
