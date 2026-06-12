@@ -443,3 +443,64 @@ export async function searchProjectCode(
   if (options?.filePath) endpoint += `&filename=${encodeURIComponent(options.filePath)}`;
   return gitlabFetchPaginated<SearchBlob>(endpoint);
 }
+
+/**
+ * Annotate a unified diff with the real old/new line numbers for every line.
+ *
+ * GitLab line comments require the exact `old_line` (removed lines) or
+ * `new_line` (added/context lines) — and BOTH for unchanged context lines.
+ * The raw unified diff only carries hunk headers (`@@ -a,b +c,d @@`), forcing
+ * the reader to count lines manually, which is error-prone. This rewrites each
+ * line as `[old][new]<marker> content` so the exact numbers are explicit.
+ *
+ * Marker: `+` added, `-` removed, ` ` unchanged/context.
+ * For added lines the old column is blank; for removed lines the new column is
+ * blank; for context lines both are filled (pass both to comment on context).
+ */
+export function annotateDiff(diff: string): string {
+  if (!diff) return diff;
+
+  const pad = (n: number | null): string => (n === null ? "    " : String(n).padStart(4, " "));
+  const out: string[] = [];
+  let oldLine = 0;
+  let newLine = 0;
+
+  for (const raw of diff.split("\n")) {
+    const hunk = raw.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) {
+      oldLine = parseInt(hunk[1], 10);
+      newLine = parseInt(hunk[2], 10);
+      out.push(raw);
+      continue;
+    }
+
+    // File header lines that may appear inside a diff payload.
+    if (raw.startsWith("---") || raw.startsWith("+++") || raw.startsWith("diff ") || raw.startsWith("index ")) {
+      out.push(raw);
+      continue;
+    }
+
+    const marker = raw[0];
+    if (marker === "+") {
+      out.push(`[${pad(null)}][${pad(newLine)}]+ ${raw.slice(1)}`);
+      newLine++;
+    } else if (marker === "-") {
+      out.push(`[${pad(oldLine)}][${pad(null)}]- ${raw.slice(1)}`);
+      oldLine++;
+    } else if (marker === " ") {
+      out.push(`[${pad(oldLine)}][${pad(newLine)}]  ${raw.slice(1)}`);
+      oldLine++;
+      newLine++;
+    } else if (raw === "") {
+      out.push(raw);
+    } else if (marker === "\\") {
+      // "\ No newline at end of file"
+      out.push(raw);
+    } else {
+      out.push(raw);
+    }
+  }
+
+  return out.join("\n");
+}
+

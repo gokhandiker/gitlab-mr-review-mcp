@@ -27,6 +27,7 @@ import {
   listOpenMRs,
   compareBranches,
   searchProjectCode,
+  annotateDiff,
 } from "./gitlab-client.js";
 
 const server = new McpServer({
@@ -74,7 +75,7 @@ server.tool(
 
 server.tool(
   "get_mr_diffs",
-  "Get all file diffs/changes in a GitLab Merge Request. Returns the full diff content for each changed file.",
+  "Get all file diffs/changes in a GitLab Merge Request. Every diff line is annotated with its real line numbers as `[old][new]<marker> content` (marker: + added, - removed, space = unchanged context). Use these exact numbers when commenting: pass `new_line` for added/context lines, `old_line` for removed lines, and BOTH for unchanged context lines.",
   {
     mr_url: z.string().url().describe("Full GitLab MR URL"),
   },
@@ -91,11 +92,15 @@ server.tool(
         ? `[RENAMED from ${file.old_path}]`
         : "[MODIFIED]";
 
-      return `## ${status} ${file.new_path}\n\n\`\`\`diff\n${file.diff}\n\`\`\``;
+      return `## ${status} ${file.new_path}\n\n\`\`\`diff\n${annotateDiff(file.diff)}\n\`\`\``;
     });
 
+    const legend =
+      "Line format: `[old_line][new_line]<marker> content` — marker `+` added, `-` removed, ` ` unchanged. " +
+      "When commenting, use `new_line` for `+`/context lines, `old_line` for `-` lines, and both for context lines.";
+
     return {
-      content: [{ type: "text", text: `# MR Diffs (${diffs.length} files changed)\n\n${output.join("\n\n---\n\n")}` }],
+      content: [{ type: "text", text: `# MR Diffs (${diffs.length} files changed)\n\n${legend}\n\n${output.join("\n\n---\n\n")}` }],
     };
   }
 );
@@ -142,12 +147,12 @@ server.tool(
 
 server.tool(
   "create_mr_comment",
-  "Create a line-level review comment on a specific file and line in a GitLab Merge Request diff. Use new_line for added/unchanged lines, old_line for removed lines.",
+  "Create a line-level review comment on a specific file and line in a GitLab Merge Request diff. Use the annotated numbers from get_mr_diffs: new_line for added lines, old_line for removed lines, and BOTH old_line and new_line for unchanged context lines (otherwise GitLab cannot anchor the comment).",
   {
     mr_url: z.string().url().describe("Full GitLab MR URL"),
     file_path: z.string().describe("Path of the file to comment on (as shown in the diff)"),
-    new_line: z.number().optional().describe("Line number in the new version of the file (for added or unchanged lines)"),
-    old_line: z.number().optional().describe("Line number in the old version of the file (for removed lines)"),
+    new_line: z.number().optional().describe("Line number in the new version of the file (for added or unchanged/context lines)"),
+    old_line: z.number().optional().describe("Line number in the old version of the file (for removed or unchanged/context lines)"),
     comment: z.string().describe("The review comment text (supports Markdown)"),
   },
   async ({ mr_url, file_path, new_line, old_line, comment }) => {
@@ -465,13 +470,13 @@ server.tool(
 
 server.tool(
   "batch_create_comments",
-  "Create multiple line-level review comments on a Merge Request in one call. More efficient than calling create_mr_comment multiple times.",
+  "Create multiple line-level review comments on a Merge Request in one call. More efficient than calling create_mr_comment multiple times. Use the annotated numbers from get_mr_diffs: new_line for added lines, old_line for removed lines, BOTH for unchanged context lines.",
   {
     mr_url: z.string().url().describe("Full GitLab MR URL"),
     comments: z.array(z.object({
       file_path: z.string().describe("File path"),
-      new_line: z.number().optional().describe("Line in new file version"),
-      old_line: z.number().optional().describe("Line in old file version"),
+      new_line: z.number().optional().describe("Line in new file version (added or context lines)"),
+      old_line: z.number().optional().describe("Line in old file version (removed or context lines)"),
       comment: z.string().describe("Comment text (Markdown)"),
     })).describe("Array of comments to post"),
   },

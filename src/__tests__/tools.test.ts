@@ -387,3 +387,52 @@ describe("compareBranches", () => {
     );
   });
 });
+
+describe("annotateDiff", () => {
+  it("annotates added, removed, and context lines with correct numbers", () => {
+    const diff = [
+      "@@ -10,4 +10,4 @@",
+      " context A",
+      "-removed line",
+      "+added line",
+      " context B",
+    ].join("\n");
+
+    const result = client.annotateDiff(diff);
+    const lines = result.split("\n");
+
+    // Hunk header preserved
+    expect(lines[0]).toBe("@@ -10,4 +10,4 @@");
+    // Context A: old 10, new 10
+    expect(lines[1]).toBe("[  10][  10]  context A");
+    // Removed line: old 11, new blank
+    expect(lines[2]).toBe("[  11][    ]- removed line");
+    // Added line: old blank, new 11
+    expect(lines[3]).toBe("[    ][  11]+ added line");
+    // Context B: old 12, new 12
+    expect(lines[4]).toBe("[  12][  12]  context B");
+  });
+
+  it("resets counters across multiple hunks", () => {
+    const diff = [
+      "@@ -1,1 +1,2 @@",
+      " first",
+      "+inserted",
+      "@@ -50,1 +51,1 @@",
+      "-old fifty",
+      "+new fifty-one",
+    ].join("\n");
+
+    const lines = client.annotateDiff(diff).split("\n");
+    expect(lines[1]).toBe("[   1][   1]  first");
+    expect(lines[2]).toBe("[    ][   2]+ inserted");
+    expect(lines[3]).toBe("@@ -50,1 +51,1 @@");
+    expect(lines[4]).toBe("[  50][    ]- old fifty");
+    expect(lines[5]).toBe("[    ][  51]+ new fifty-one");
+  });
+
+  it("returns empty string unchanged", () => {
+    expect(client.annotateDiff("")).toBe("");
+  });
+});
+
