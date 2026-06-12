@@ -136,6 +136,39 @@ Once configured, ask your AI assistant:
 - *"Approve the MR and add the 'reviewed' label"*
 - *"List all open MRs in the project"*
 
+## Custom Review Agent (`@gitlab-reviewer`)
+
+This repo ships a custom VS Code Copilot agent at [.github/agents/gitlab-reviewer.agent.md](.github/agents/gitlab-reviewer.agent.md) so the whole team reviews MRs to the same standard.
+
+### Install the agent globally (one-liner)
+
+The agent lives in this repo's `.github/agents/`, so it only shows up when **this** repo is open. To use `GitLab Reviewer` in **any** workspace, install it into your VS Code user profile:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gokhandiker/gitlab-mr-review-mcp/main/scripts/install-agent.sh | bash
+```
+
+This copies the agent into your VS Code `User/prompts` folder (works on macOS, Linux, and Windows via Git Bash). For VS Code Insiders, prefix with `INSIDERS=1`. After installing, reload VS Code.
+
+> The agent calls tools from the `gitlab-mr-review` MCP server, so make sure that server is configured first (see [Configuration](#configuration)). The server ID **must** be `gitlab-mr-review` to match the agent.
+
+### Usage
+
+In VS Code Chat, pick **GitLab Reviewer** from the agent selector (or type `@`) and paste an MR URL:
+
+```
+@gitlab-reviewer Review https://gitlab.com/group/project/-/merge_requests/123
+```
+
+The agent:
+- Reads the MR info, diffs, and full file context as needed.
+- Reviews against a fixed checklist: **Security · Performance · Correctness · Maintainability · Testing**.
+- Posts severity-tagged line comments (🔴 Critical / 🟡 Warning / 🔵 Suggestion / ⚪ Nitpick) in a single batch.
+- Offers one-click code suggestions where applicable.
+- Approves only when there are no Critical findings.
+
+It is restricted to read + comment/approve tools — it never creates or edits merge requests.
+
 ## URL Format
 
 Tools that accept `mr_url` expect a full GitLab MR URL:
