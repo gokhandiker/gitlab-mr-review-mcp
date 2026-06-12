@@ -14,6 +14,7 @@ import {
   createDiffNote,
   replyToDiscussion,
   resolveDiscussion,
+  deleteMRNote,
   approveMR,
   unapproveMR,
   addMRLabels,
@@ -131,7 +132,7 @@ server.tool(
         }
 
         const resolved = note.resolved ? " ✅ resolved" : note.resolvable ? " ⏳ unresolved" : "";
-        return `- **${note.author.name}** (@${note.author.username}) _${note.created_at}_${location}${resolved}\n  > ${note.body.replace(/\n/g, "\n  > ")}`;
+        return `- **${note.author.name}** (@${note.author.username}) _${note.created_at}_ (note_id: ${note.id})${location}${resolved}\n  > ${note.body.replace(/\n/g, "\n  > ")}`;
       });
 
       return `**Discussion ${discussion.id}**\n${notes.join("\n\n")}`;
@@ -269,6 +270,22 @@ server.tool(
     const { projectPath, mrIid } = parseMrUrl(mr_url);
     await resolveDiscussion(projectPath, mrIid, discussion_id, resolved);
     return { content: [{ type: "text", text: `✅ Discussion ${discussion_id} ${resolved ? "resolved" : "unresolved"}` }] };
+  }
+);
+
+// ─── Tool: Delete MR Comment ─────────────────────────────────────────────────
+
+server.tool(
+  "delete_mr_comment",
+  "Delete a comment/note on a GitLab Merge Request by its note_id. Get the note_id from get_mr_discussions output. You can only delete notes you authored (or any note if you are a project maintainer/owner). System notes cannot be deleted.",
+  {
+    mr_url: z.string().url().describe("Full GitLab MR URL"),
+    note_id: z.number().describe("The note_id of the comment to delete (shown as 'note_id: N' in get_mr_discussions output)"),
+  },
+  async ({ mr_url, note_id }) => {
+    const { projectPath, mrIid } = parseMrUrl(mr_url);
+    await deleteMRNote(projectPath, mrIid, note_id);
+    return { content: [{ type: "text", text: `🗑️ Comment (note_id: ${note_id}) deleted.` }] };
   }
 );
 

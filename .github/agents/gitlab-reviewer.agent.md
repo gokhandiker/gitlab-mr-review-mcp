@@ -17,6 +17,7 @@ tools:
   - gitlab-mr-review/create_mr_suggestion
   - gitlab-mr-review/reply_to_discussion
   - gitlab-mr-review/resolve_discussion
+  - gitlab-mr-review/delete_mr_comment
   - gitlab-mr-review/approve_mr
   - gitlab-mr-review/unapprove_mr
   - gitlab-mr-review/add_mr_label

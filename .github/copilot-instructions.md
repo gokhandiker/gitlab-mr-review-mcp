@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a local MCP server that provides 21 tools for interacting with GitLab Merge Requests. It authenticates via a Personal Access Token (PAT) with `api` scope, passed through the `GITLAB_TOKEN` environment variable.
+This is a local MCP server that provides 22 tools for interacting with GitLab Merge Requests. It authenticates via a Personal Access Token (PAT) with `api` scope, passed through the `GITLAB_TOKEN` environment variable.
 
 ## Available Tools
 
@@ -31,6 +31,7 @@ This is a local MCP server that provides 21 tools for interacting with GitLab Me
 | `create_mr_suggestion` | Post an applicable code suggestion (Apply button) |
 | `reply_to_discussion` | Reply to an existing discussion thread |
 | `resolve_discussion` | Resolve or unresolve a discussion |
+| `delete_mr_comment` | Delete a comment/note by its note_id (only your own, or any if maintainer) |
 | `approve_mr` | Approve the MR |
 | `unapprove_mr` | Remove your approval |
 | `add_mr_label` | Add labels to the MR |

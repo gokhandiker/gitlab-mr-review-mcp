@@ -120,6 +120,7 @@ Or if you cloned locally:
 | `create_mr_suggestion` | Post an applicable code suggestion (Apply button) |
 | `reply_to_discussion` | Reply to an existing discussion thread |
 | `resolve_discussion` | Resolve or unresolve a discussion |
+| `delete_mr_comment` | Delete a comment/note by its note_id |
 | `approve_mr` | Approve the MR |
 | `unapprove_mr` | Remove your approval |
 | `add_mr_label` | Add labels to the MR |

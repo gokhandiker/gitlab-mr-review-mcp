@@ -336,6 +336,28 @@ export async function resolveDiscussion(
   );
 }
 
+export async function deleteMRNote(
+  projectPath: string,
+  mrIid: number,
+  noteId: number
+): Promise<void> {
+  if (!GITLAB_TOKEN) {
+    throw new Error("GITLAB_TOKEN environment variable is not set");
+  }
+
+  // DELETE returns 204 No Content, so we cannot parse JSON like gitlabFetch does.
+  const url = `${GITLAB_URL}/api/v4/projects/${projectPath}/merge_requests/${mrIid}/notes/${noteId}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "PRIVATE-TOKEN": GITLAB_TOKEN },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`GitLab API error ${response.status}: ${body} (${url})`);
+  }
+}
+
 export async function approveMR(projectPath: string, mrIid: number): Promise<void> {
   await gitlabFetch<unknown>(`/projects/${projectPath}/merge_requests/${mrIid}/approve`, {
     method: "POST",
